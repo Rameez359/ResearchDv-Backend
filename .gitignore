@@ -1,0 +1,5 @@
+.env
+apiKey.json
+.vscode
+.prettierrc
+node_modules

@@ -189,7 +189,7 @@ const UploadFolderData = async (folderPath, userId) => {
             console.log(
                 `mainFolderName: ${mainFolderName}, mainFolderId: ${mainFolderId}, validationId: ${validationId}, trainId : ${trainId}, testId : ${testId}`
             );
-            const addDataset = projectController.createDataset(
+            const addDataset = await projectController.createDataset(
                 mainFolderName,
                 mainFolderId,
                 validationId,
@@ -317,3 +317,14 @@ exports.returnRes = (data, reqStatus = 'TRUE', statusCode, res) => {
         statusCode: statusCode,
     });
 };
+
+exports.getFIleName = (distPath)=>{
+    try {
+    const files = fs.readdirSync(distPath);
+    console.log('Unzipped file names:');
+    const unZipFileName = files[0];
+    return unZipFileName;
+  } catch (err) {
+    console.error(err);
+  }
+}

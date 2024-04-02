@@ -48,9 +48,15 @@ router.post('/postProjectData', upload.single('file'), async (req, res, next) =>
         const payload = req.body;
         const userId = payload.userId;
         const file = req.file;
+        const upload = `./uploads`
         const tempFilePath = `./uploads/${file.originalname}`;
-        if (!fs.existsSync(tempFilePath)) {
-            fs.mkdirSync(tempFilePath);
+        if (!fs.existsSync(upload)) {
+            fs.mkdirSync(upload);
+        }
+
+        const unZips = `./unZips`
+        if (!fs.existsSync(unZips)) {
+            fs.mkdirSync(unZips);
         }
         const distPath = `./unZips/${userId}`;
         if (!fs.existsSync(distPath)) {

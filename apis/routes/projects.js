@@ -49,6 +49,9 @@ router.post('/postProjectData', upload.single('file'), async (req, res, next) =>
         const userId = payload.userId;
         const file = req.file;
         const tempFilePath = `./uploads/${file.originalname}`;
+        if (!fs.existsSync(tempFilePath)) {
+            fs.mkdirSync(tempFilePath);
+        }
         const distPath = `./unZips/${userId}`;
         if (!fs.existsSync(distPath)) {
             fs.mkdirSync(distPath);
@@ -61,7 +64,6 @@ router.post('/postProjectData', upload.single('file'), async (req, res, next) =>
             console.log('Extraction completed successfully!');
             const unZipFileName = commonController.getFIleName(distPath);
             const checkFolder = await commonController.checkSubfolders(`${distPath}/${unZipFileName}`, res, userId);
-            console.log('')
         } else {
             console.error('Error during extraction!');
         }

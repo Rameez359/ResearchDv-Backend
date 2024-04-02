@@ -39,8 +39,6 @@ app.use(express.static(path.resolve(__dirname, 'client')));
 
 var indexRouter = require('./apis/routes/index');
 var usersRouter = require('./apis/routes/users');
-var flocksRouter = require('./apis/routes/flocks');
-var feedRouter = require('./apis/routes/feed');
 var projectRouter = require('./apis/routes/projects');
 
 // view engine setup
@@ -55,8 +53,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', require('./apis/routes/index'));
 app.use('/users', usersRouter);
-app.use('/flocks', flocksRouter);
-app.use('/feed', feedRouter);
 app.use('/projects', projectRouter);
 
 // catch 404 and forward to error handler

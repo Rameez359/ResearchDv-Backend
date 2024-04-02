@@ -55,12 +55,22 @@ const getUserProject = async (userId) => {
 
 const getUserDatasets = async (userId) => {
     try {
+        const datasets = await db
+            .collection('datasets')
+            .find({ userId: new ObjectId(userId) })
+            .toArray();
+
         const totalDatasets = await db
             .collection('datasets')
             .find({ userId: new ObjectId(userId) })
             .count();
 
-        return totalDatasets;
+        const data = {
+            datasets: datasets,
+            totalDatasets: totalDatasets,
+        };
+
+        return data;
     } catch (error) {
         console.error('Error fetching datasets:', error);
         return error;

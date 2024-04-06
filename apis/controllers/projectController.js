@@ -1,6 +1,9 @@
 const database = require('../../private/database/connectDb');
+const common = require('./commonController');
 const { ObjectId } = require('mongodb');
 const db = database.getDbClient();
+require('dotenv').config();
+
 
 const createProject = async (payload) => {
     try {
@@ -16,10 +19,17 @@ const createProject = async (payload) => {
         if (!(projectName && projectType && userId)) {
             return { Error: 'Invalid Perameters' };
         }
+        const projectsPath = process.env.PROJECT_FOLDER_ID
+
+        const projectFolderId = await common.createFolder1(projectsPath,null, projectName, 'parent');
+        const resultFolderId = await common.createFolder1(projectFolderId,null, 'Results', 'parent');
+
         const insertObj = {
             userId: new ObjectId(userId),
             projectName: projectName,
             projectType: projectType,
+            projectFolderId: projectFolderId,
+            resultFolderId:resultFolderId,
             createdAt: new Date(),
             updatedAt: new Date(),
         };

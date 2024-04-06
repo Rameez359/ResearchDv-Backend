@@ -9,6 +9,8 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 const { google } = require('googleapis');
 
+const { verifyToken } = require('../controllers/verifyToken');
+
 router.get('/', async (req, res, next) => {
     try {
         res.send({ abc: 'abc' });
@@ -17,12 +19,11 @@ router.get('/', async (req, res, next) => {
     }
 });
 
-router.post('/postProject', async (req, res, next) => {
+router.post('/postProject',verifyToken, async (req, res, next) => {
     try {
         console.log(`Create Project payload request : ${JSON.stringify(req.body)}`);
         const payload = req.body;
-        // const userId = req.decoded.userId;
-        // const userId = 'faiz123';
+
         const result = await projectController.createProject(payload);
         res.json({ result });
     } catch (error) {
@@ -30,12 +31,24 @@ router.post('/postProject', async (req, res, next) => {
     }
 });
 
-router.get('/getUserProject/:id', async (req, res, next) => {
+router.get('/getUserProject/:id',verifyToken, async (req, res, next) => {
     try {
         console.log(`Get User's Project payload request : ${JSON.stringify(req.params.id)}`);
         const userId = req.params.id;
         // const userId = req.decoded.userId;
         const result = await projectController.getUserProject(userId);
+        res.json({ result });
+    } catch (error) {
+        return { Error: `Something went wrong : ${error}` };
+    }
+});
+
+router.get('/getDatasets/:id',verifyToken, async (req, res, next) => {
+    try {
+        console.log(`Get User's Project payload request : ${JSON.stringify(req.params.id)}`);
+        const userId = req.params.id;
+        // const userId = req.decoded.userId;
+        const result = await projectController.getUserDatasets(userId);
         res.json({ result });
     } catch (error) {
         return { Error: `Something went wrong : ${error}` };
@@ -76,16 +89,6 @@ router.post('/postProjectData', upload.single('file'), async (req, res, next) =>
     } catch (error) {}
 });
 
-router.get('/getDatasets/:id', async (req, res, next) => {
-    try {
-        console.log(`Get User's Project payload request : ${JSON.stringify(req.params.id)}`);
-        const userId = req.params.id;
-        // const userId = req.decoded.userId;
-        const result = await projectController.getUserDatasets(userId);
-        res.json({ result });
-    } catch (error) {
-        return { Error: `Something went wrong : ${error}` };
-    }
-});
+
 
 module.exports = router;

@@ -40,13 +40,13 @@ const localSignupStepOne = async (req, res, next) => {
     newUser.updatedAt = date;
 
     const verificationCode = generateCode();
-newUser.verificationCode = verificationCode;
+    newUser.verificationCode = verificationCode;
     const userResp = await db.collection('NewUsers').insertOne(req.body);
     console.log(`New Temporary User Request Ended with Response: [${JSON.stringify(userResp)}`);
     const data = {
-        msg : 'User Created',
-        userId: userResp.insertedId
-    }
+        msg: 'User Created',
+        userId: userResp.insertedId,
+    };
     if (userResp) {
         returnRes(data, 'TRUE', 201, res);
     } else returnRes('Something went wrong in inserting user', 'FALSE', 400, res);
@@ -127,6 +127,12 @@ const localSignIn = async (req, res, next) => {
 
     const decryptPassword = CryptoJS.AES.decrypt(verifyUser.password, secret_key).toString(CryptoJS.enc.Utf8);
     if (password !== decryptPassword) returnRes('Incorrect Password', 'FALSE', 401, res);
+
+    //create JWT token
+    const token = jwt.sign({ userId: verifyUser._id, userName: verifyUser.userName }, secret_key, {
+        expiresIn: '24h',
+    });
+
     const mailOptions = {
         from: 'alirameez359@gmail.com',
         to: verifyUser.email,
@@ -139,8 +145,10 @@ const localSignIn = async (req, res, next) => {
         msg: 'User has been signed successfully',
         userId: verifyUser._id,
         username: verifyUser.username,
+        token: token,
     };
-     returnRes(data, 'TRUE', 200, res);
+    console.log(`User SignIn Response : ${JSON.stringify(data)}`);
+    returnRes(data, 'TRUE', 200, res);
 };
 module.exports = {
     verifyToken,

@@ -11,7 +11,7 @@ require('dotenv').config();
 const projectController = require('./projectController');
 const apikeys = require('../../apiKey.json');
 const SCOPE = ['https://www.googleapis.com/auth/drive'];
-const parentFolderId = '1cYxVrBUFiiq-PVUAUr4QAVEkTd2gbcFL';
+const parentFolderId = process.env.DATASET_FOLDER_ID;
 const secretKey = 'AiMultiModel';
 
 const createTransporter = async () => {
@@ -93,7 +93,7 @@ exports.uploadFile = async (authClient, file) => {
 
         var fileMetaData = {
             name: file.originalname,
-            parents: ['1cYxVrBUFiiq-PVUAUr4QAVEkTd2gbcFL'], // A folder ID to which file will get uploaded
+            parents: [parentFolderId], // A folder ID to which file will get uploaded
         };
 
         drive.files.create(
@@ -220,7 +220,7 @@ const createClassFolder = async (classFolderPath, classFolderId) => {
             console.error('Error checking subfolders:', error);
         });
 };
-const createFolder = async (folderId, folderPath, folderName, operation) => {
+const createFolder = async (folderId, folderPath=null, folderName, operation) => {
     try {
         console.log(folderPath);
 
@@ -328,3 +328,30 @@ exports.getFIleName = (distPath)=>{
     console.error(err);
   }
 }
+exports.createFolder1 = async (folderId, folderPath = null, folderName, operation) => {
+    try {
+        console.log(folderPath);
+
+        const authClient = await authorize();
+        const drive = google.drive({ version: 'v3', auth: authClient });
+
+        console.log('Folder Name', folderName);
+        const folderMetadata = {
+            name: folderName,
+            mimeType: 'application/vnd.google-apps.folder',
+            parents: [`${folderId}`], // A folder ID to which file will get uploaded
+        };
+
+        const res = await drive.files.create({
+            resource: folderMetadata,
+            fields: 'id',
+        });
+
+        console.log('Folder ID:', res.data.id);
+        const newFolderId = res.data.id;
+        if (operation === 'child') await uploadSubfolderData(folderPath, newFolderId);
+        return newFolderId;
+    } catch (err) {
+        console.error('Error creating folder:', err.message);
+    }
+};

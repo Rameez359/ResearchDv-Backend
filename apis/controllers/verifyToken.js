@@ -123,10 +123,10 @@ const localSignIn = async (req, res, next) => {
     const verifyUser = await db
         .collection('users')
         .findOne({ $or: [{ username: username_mail }, { email: username_mail }] });
-    if (!verifyUser) returnRes('Account not found', 'FALSE', 404, res);
+    if (!verifyUser) return returnRes('Account not found', 'FALSE', 404, res);
 
     const decryptPassword = CryptoJS.AES.decrypt(verifyUser.password, secret_key).toString(CryptoJS.enc.Utf8);
-    if (password !== decryptPassword) returnRes('Incorrect Password', 'FALSE', 401, res);
+    if (password !== decryptPassword) return returnRes('Incorrect Password', 'FALSE', 401, res);
 
     //create JWT token
     const token = jwt.sign({ userId: verifyUser._id, userName: verifyUser.userName }, secret_key, {
@@ -148,7 +148,7 @@ const localSignIn = async (req, res, next) => {
         token: token,
     };
     console.log(`User SignIn Response : ${JSON.stringify(data)}`);
-    returnRes(data, 'TRUE', 200, res);
+    return returnRes(data, 'TRUE', 200, res);
 };
 module.exports = {
     verifyToken,

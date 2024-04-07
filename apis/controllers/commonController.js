@@ -50,7 +50,7 @@ const createTransporter = async () => {
     return transporter;
 };
 
-exports.unZipFile1 = async (filePath, distPath, res) => {
+const unZipFile1 = async (filePath, distPath, res) => {
     console.log('Files', filePath);
     let destPath;
     const zip = new AdmZip(filePath);
@@ -81,13 +81,13 @@ exports.unZipFile1 = async (filePath, distPath, res) => {
     //     });
 };
 
-exports.unzipFolder = (filePath, distPath, callback) => {
+const unzipFolder = (filePath, distPath, callback) => {
     console.log('In zip folder', filePath);
     const zip = new AdmZip(filePath);
     zip.extractAllTo(distPath, true, callback); // Extract all files with callback
     return true; // Indicate successful extraction
 };
-exports.uploadFile = async (authClient, file) => {
+const uploadFile = async (authClient, file) => {
     return new Promise((resolve, reject) => {
         const drive = google.drive({ version: 'v3', auth: authClient });
 
@@ -127,7 +127,7 @@ const authorize = async () => {
     return jwtClient;
 };
 
-exports.checkSubfolders = async (folderPath, res, userId) => {
+const checkSubfolders = async (folderPath, res, userId) => {
     try {
         console.log('folderPath is', folderPath);
         fs.promises
@@ -139,11 +139,11 @@ exports.checkSubfolders = async (folderPath, res, userId) => {
 
                 if (hasTest && hasTrain && hasValid) {
                     console.log('Folder contains subfolders: test, train, and valid');
-                    await UploadFolderData(folderPath, userId);
-                    res.status(200).json({ message: 'File have required folders' });
+                    await UploadFolderData(folderPath, userId, res);
+                    // res.status(200).json({ message: 'File have required folders' });
                 } else {
                     console.log('Missing required subfolders.');
-                    res.status(400).json({ message: `File didn't have required folders` });
+                    return returnResponse(res, 400, `Uploaded file didn't have required folders`);
                     return false;
                 }
             })
@@ -155,7 +155,7 @@ exports.checkSubfolders = async (folderPath, res, userId) => {
     }
 };
 
-const UploadFolderData = async (folderPath, userId) => {
+const UploadFolderData = async (folderPath, userId, res) => {
     let mainFolderId;
     let validationId;
     let trainId;
@@ -197,9 +197,11 @@ const UploadFolderData = async (folderPath, userId) => {
                 testId,
                 userId
             );
+            return returnResponse(res, 200, `File Uploaded Successfully`,addDataset);
         })
         .catch((error) => {
             console.error('Error checking subfolders:', error);
+            return returnResponse(res, 500, `Server Error : ${error}`,error);
         });
 };
 
@@ -220,7 +222,7 @@ const createClassFolder = async (classFolderPath, classFolderId) => {
             console.error('Error checking subfolders:', error);
         });
 };
-const createFolder = async (folderId, folderPath=null, folderName, operation) => {
+const createFolder = async (folderId, folderPath = null, folderName, operation) => {
     try {
         console.log(folderPath);
 
@@ -301,16 +303,16 @@ const generateUniqueName = (secretKey) => {
     return uniqueName;
 };
 
-exports.sendMail = async (mailOption) => {
+const sendMail = async (mailOption) => {
     let emailTransporter = await createTransporter();
     await emailTransporter.sendMail(mailOption);
 };
-exports.generateCode = () => {
+const generateCode = () => {
     const min = 1000000; // Minimum 7-digit number
     const max = 9999999; // Maximum 7-digit number
     return Math.floor(Math.random() * (max - min + 1)) + min;
 };
-exports.returnRes = (data, reqStatus = 'TRUE', statusCode, res) => {
+const returnRes = (data, reqStatus = 'TRUE', statusCode, res, msg = null) => {
     res.status(statusCode).json({
         response: data,
         requestStatus: reqStatus,
@@ -318,17 +320,17 @@ exports.returnRes = (data, reqStatus = 'TRUE', statusCode, res) => {
     });
 };
 
-exports.getFIleName = (distPath)=>{
+const getFIleName = (distPath) => {
     try {
-    const files = fs.readdirSync(distPath);
-    console.log('Unzipped file names:');
-    const unZipFileName = files[0];
-    return unZipFileName;
-  } catch (err) {
-    console.error(err);
-  }
-}
-exports.createFolder1 = async (folderId, folderPath = null, folderName, operation) => {
+        const files = fs.readdirSync(distPath);
+        console.log('Unzipped file names:');
+        const unZipFileName = files[0];
+        return unZipFileName;
+    } catch (err) {
+        console.error(err);
+    }
+};
+const createFolder1 = async (folderId, folderPath = null, folderName, operation) => {
     try {
         console.log(folderPath);
 
@@ -354,4 +356,34 @@ exports.createFolder1 = async (folderId, folderPath = null, folderName, operatio
     } catch (err) {
         console.error('Error creating folder:', err.message);
     }
+};
+
+const returnResponse = (res, statusCode, msg, data = null) => {
+    const response = {
+        statusCode: statusCode,
+        message: msg,
+        data: data,
+    };
+    res.status(statusCode).json(response);
+};
+module.exports = {
+    createClassFolder,
+    unZipFile1,
+    unzipFolder,
+    unzipFolder,
+    uploadFile,
+    authorize,
+    checkSubfolders,
+    UploadFolderData,
+    createClassFolder,
+    createFolder,
+    uploadSubfolderData,
+    uploadImageToDrive,
+    generateUniqueName,
+    sendMail,
+    generateCode,
+    returnRes,
+    getFIleName,
+    createFolder1,
+    returnResponse,
 };

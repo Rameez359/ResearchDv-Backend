@@ -19,7 +19,7 @@ router.get('/', async (req, res, next) => {
     }
 });
 
-router.post('/postProject',verifyToken, async (req, res, next) => {
+router.post('/postProject', verifyToken, async (req, res, next) => {
     try {
         console.log(`Create Project payload request : ${JSON.stringify(req.body)}`);
         const payload = req.body;
@@ -31,7 +31,7 @@ router.post('/postProject',verifyToken, async (req, res, next) => {
     }
 });
 
-router.get('/getUserProject/:id',verifyToken, async (req, res, next) => {
+router.get('/getUserProject/:id', verifyToken, async (req, res, next) => {
     try {
         console.log(`Get User's Project payload request : ${JSON.stringify(req.params.id)}`);
         const userId = req.params.id;
@@ -43,7 +43,7 @@ router.get('/getUserProject/:id',verifyToken, async (req, res, next) => {
     }
 });
 
-router.get('/getDatasets/:id',verifyToken, async (req, res, next) => {
+router.get('/getDatasets/:id', verifyToken, async (req, res, next) => {
     try {
         console.log(`Get User's Project payload request : ${JSON.stringify(req.params.id)}`);
         const userId = req.params.id;
@@ -61,13 +61,13 @@ router.post('/postProjectData', upload.single('file'), async (req, res, next) =>
         const payload = req.body;
         const userId = payload.userId;
         const file = req.file;
-        const upload = `./uploads`
+        const upload = `./uploads`;
         const tempFilePath = `./uploads/${file.originalname}`;
         if (!fs.existsSync(upload)) {
             fs.mkdirSync(upload);
         }
 
-        const unZips = `./unZips`
+        const unZips = `./unZips`;
         if (!fs.existsSync(unZips)) {
             fs.mkdirSync(unZips);
         }
@@ -89,6 +89,6 @@ router.post('/postProjectData', upload.single('file'), async (req, res, next) =>
     } catch (error) {}
 });
 
-
+router.post('/postTrainModel', projectController.postTrainModel);
 
 module.exports = router;

@@ -1,6 +1,9 @@
+const fs = require('fs');
 const database = require('../../private/database/connectDb');
 const common = require('./commonController');
+const folder = require('./createFolder');
 const projectService = require('../services/projectService');
+const datasetService = require('../services/datasetService');
 const { ObjectId } = require('mongodb');
 const db = database.getDbClient();
 require('dotenv').config();
@@ -21,8 +24,8 @@ const createProject = async (payload) => {
         }
         const projectsPath = process.env.PROJECT_FOLDER_ID;
 
-        const projectFolderId = await common.createFolder1(projectsPath, null, projectName, 'parent');
-        const resultFolderId = await common.createFolder1(projectFolderId, null, 'Results', 'parent');
+        const projectFolderId = await folder.createFolder1(projectsPath, projectName);
+        const resultFolderId = await folder.createFolder1(projectFolderId, 'Results');
 
         const insertObj = {
             userId: new ObjectId(userId),
@@ -118,8 +121,49 @@ const createDataset = async (datasetName, mainFolderId, validationId, trainId, t
         validId: validationId,
     };
     const dataset = await db.collection('datasets').insertOne(datasetBody);
-    
+
     return dataset;
+};
+
+const postDataset = async (req, res, next) => {
+    try {
+        console.log(`Get User's Dataset payload request : ${JSON.stringify(req.body)}`);
+        const payload = req.body;
+        const userId = payload.userId;
+        const file = req.file;
+        const uniqueCode = folder.generateUniqueName();
+        const upload = `./uploads`;
+        const tempFilePath = `./uploads/${file.originalname}`;
+        if (!fs.existsSync(upload)) {
+            fs.mkdirSync(upload);
+        }
+
+        const distPath = `./unZips`;
+        if (!fs.existsSync(distPath)) {
+            fs.mkdirSync(distPath);
+        }
+        await fs.promises.writeFile(tempFilePath, file.buffer);
+
+        extractionSuccess = await folder.unzipFolder(tempFilePath, distPath);
+        if (!extractionSuccess) return folder.returnResponse(res, 400, 'Error in File Processing');
+
+        let unZipFileName = await folder.getFileName(distPath);
+        let fileName = `${unZipFileName}-${uniqueCode}`;
+        
+        const validFolder = await folder.checkSubfolders(`${distPath}/${unZipFileName}`, userId);
+        if (!validFolder) return folder.returnResponse(res, 400, `Uploaded file didn't have required folders`);
+
+        const uploadFileId = await folder.uploadFile(file, tempFilePath, fileName);
+        const datasetResp = await datasetService.addDatasets(userId, fileName, uploadFileId);
+        if (!datasetResp.acknowledged) return folder.returnResponse(res, 400, 'Error in adding new dataset');
+
+        await folder.deleteFolder(upload);
+        await folder.deleteFolder(distPath);
+
+        return folder.returnResponse(res, 201, `File Uploaded Successfully`, datasetResp);
+    } catch (error) {
+        return folder.returnResponse(res, 500, `Server Error: ${error}`);
+    }
 };
 
 const postTrainModel = async (req, res, next) => {
@@ -136,10 +180,10 @@ const postTrainModel = async (req, res, next) => {
             return returnResponse(res, 400, 'Please Send All Required Params');
 
         const project = await projectService.getProjects({ userId: userId, projectId: projectId });
-        if (!project) return returnResponse(res, 400, 'Invalid Project Id');
+        if (project.length === 0) return returnResponse(res, 400, 'Invalid Project Id');
         console.log(`Project Name: ${JSON.stringify(project[0])}`);
         const dataset = await projectService.getDatasets({ userId: userId, datasetId: datasetId });
-        if (!dataset) return returnResponse(res, 400, 'Invalid Dataset Id');
+        if (dataset.length === 0) return returnResponse(res, 400, 'Invalid Dataset Id');
 
         const document = {
             userId: new ObjectId(userId),
@@ -157,27 +201,13 @@ const postTrainModel = async (req, res, next) => {
         if (trainResp.acknowledged)
             return returnResponse(res, 201, 'Train Model Request has been Inserted Successfully', trainResp);
         else return returnResponse(res, 500, 'Something Went Wrong in Inserting Train Request', trainResp);
-
-        // {
-        //     datasetName: dataset.name,
-        //     datasetId: new ObjectId(datasetId),
-        //     driveFolderId: dataset.driveFolderId,
-        //     trainFolderId: dataset.trainFolderId,
-        //     testFolderId: dataset.testFolderId,
-        //     validId: dataset.validId,
-        // },
     } catch (error) {
         console.log(`Error in postTrainModel: ${error}`);
-        returnResponse(res, 500, error);
+        return returnResponse(res, 500, error);
     }
 };
 
 const returnResponse = (res, statusCode, msg, data = null) => {
-    // const response = {
-    //     statusCode: statusCode,
-    //     message: msg,
-    //     data: data,
-    // };
     res.status(statusCode).json({
         statusCode: statusCode,
         message: msg,
@@ -191,5 +221,6 @@ module.exports = {
     uploadProjectData,
     createDataset,
     getUserDatasets,
+    postDataset,
     postTrainModel,
 };

@@ -3,9 +3,6 @@ const nodemailer = require('nodemailer');
 const { google } = require('googleapis');
 const OAuth2 = google.auth.OAuth2;
 const fs = require('fs');
-const unzipper = require('unzipper');
-const AdmZip = require('adm-zip');
-
 require('dotenv').config();
 
 const projectController = require('./projectController');
@@ -50,43 +47,6 @@ const createTransporter = async () => {
     return transporter;
 };
 
-const unZipFile1 = async (filePath, distPath, res) => {
-    console.log('Files', filePath);
-    let destPath;
-    const zip = new AdmZip(filePath);
-
-    zip.extractAllTo(distPath, true); // Extract all files, overwrite existing ones
-
-    console.log('All files extracted successfully!');
-
-    console.log('Folder unzipped successfully!');
-
-    // let fileUnzipPromise = new Promise((resolve, reject) => {
-    //     fs.createReadStream(filePath)
-    //         .pipe(unzipper.Extract({ path: distPath }))
-    //         .on('close', async () => {
-    //             console.log('Files unzipped successfully!');
-    //             const checkFolder = await checkSubfolders('./unZips/abc', res);
-    //         });
-    //     resolve();
-    // });
-
-    // fileUnzipPromise
-    //     .then(() => {
-    //         console.log('Completed!');
-    //         return true;
-    //     })
-    //     .catch((error) => {
-    //         console.log('Error::', error);
-    //     });
-};
-
-const unzipFolder = (filePath, distPath, callback) => {
-    console.log('In zip folder', filePath);
-    const zip = new AdmZip(filePath);
-    zip.extractAllTo(distPath, true, callback); // Extract all files with callback
-    return true; // Indicate successful extraction
-};
 const uploadFile = async (authClient, file) => {
     return new Promise((resolve, reject) => {
         const drive = google.drive({ version: 'v3', auth: authClient });
@@ -116,43 +76,6 @@ const uploadFile = async (authClient, file) => {
             }
         );
     });
-};
-
-const authorize = async () => {
-    console.log('Started Authorization');
-    const jwtClient = new google.auth.JWT(apikeys.client_email, null, apikeys.private_key, SCOPE);
-
-    await jwtClient.authorize();
-
-    return jwtClient;
-};
-
-const checkSubfolders = async (folderPath, res, userId) => {
-    try {
-        console.log('folderPath is', folderPath);
-        fs.promises
-            .readdir(folderPath)
-            .then(async (subfolders) => {
-                const hasTest = subfolders.includes('test');
-                const hasTrain = subfolders.includes('train');
-                const hasValid = subfolders.includes('valid');
-
-                if (hasTest && hasTrain && hasValid) {
-                    console.log('Folder contains subfolders: test, train, and valid');
-                    await UploadFolderData(folderPath, userId, res);
-                    // res.status(200).json({ message: 'File have required folders' });
-                } else {
-                    console.log('Missing required subfolders.');
-                    return returnResponse(res, 400, `Uploaded file didn't have required folders`);
-                    return false;
-                }
-            })
-            .catch((error) => {
-                console.error('Error checking subfolders:', error);
-            });
-    } catch (error) {
-        console.error('Error checking subfolders:', error);
-    }
 };
 
 const UploadFolderData = async (folderPath, userId, res) => {
@@ -307,11 +230,13 @@ const sendMail = async (mailOption) => {
     let emailTransporter = await createTransporter();
     await emailTransporter.sendMail(mailOption);
 };
+
 const generateCode = () => {
     const min = 1000000; // Minimum 7-digit number
     const max = 9999999; // Maximum 7-digit number
     return Math.floor(Math.random() * (max - min + 1)) + min;
 };
+
 const returnRes = (data, reqStatus = 'TRUE', statusCode, res, msg = null) => {
     res.status(statusCode).json({
         response: data,
@@ -320,17 +245,7 @@ const returnRes = (data, reqStatus = 'TRUE', statusCode, res, msg = null) => {
     });
 };
 
-const getFIleName = (distPath) => {
-    try {
-        const files = fs.readdirSync(distPath);
-        console.log('Unzipped file names:');
-        const unZipFileName = files[0];
-        return unZipFileName;
-    } catch (err) {
-        console.error(err);
-    }
-};
-const createFolder1 = async (folderId, folderPath = null, folderName, operation) => {
+const createFolder1 = async (folderId, folderName) => {
     try {
         console.log(folderPath);
 
@@ -351,7 +266,6 @@ const createFolder1 = async (folderId, folderPath = null, folderName, operation)
 
         console.log('Folder ID:', res.data.id);
         const newFolderId = res.data.id;
-        if (operation === 'child') await uploadSubfolderData(folderPath, newFolderId);
         return newFolderId;
     } catch (err) {
         console.error('Error creating folder:', err.message);
@@ -368,12 +282,7 @@ const returnResponse = (res, statusCode, msg, data = null) => {
 };
 module.exports = {
     createClassFolder,
-    unZipFile1,
-    unzipFolder,
-    unzipFolder,
     uploadFile,
-    authorize,
-    checkSubfolders,
     UploadFolderData,
     createClassFolder,
     createFolder,
@@ -383,7 +292,6 @@ module.exports = {
     sendMail,
     generateCode,
     returnRes,
-    getFIleName,
     createFolder1,
     returnResponse,
 };

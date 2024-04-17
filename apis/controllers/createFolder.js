@@ -76,7 +76,7 @@ exports.checkSubfolders = async (folderPath) => {
     }
 };
 
-exports.uploadFile = async (file, folderPath) => {
+exports.uploadFile = async (file, folderPath, fileName) => {
     console.log('In uploadFile');
 
     return new Promise(async (resolve, reject) => {
@@ -84,7 +84,7 @@ exports.uploadFile = async (file, folderPath) => {
         const drive = google.drive({ version: 'v3', auth: authClient });
 
         var fileMetaData = {
-            name: file.originalname,
+            name: fileName,
             parents: [parentFolderId], // A folder ID to which file will get uploaded
         };
 

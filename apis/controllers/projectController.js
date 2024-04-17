@@ -131,6 +131,7 @@ const postDataset = async (req, res, next) => {
         const payload = req.body;
         const userId = payload.userId;
         const file = req.file;
+        const uniqueCode = folder.generateUniqueName();
         const upload = `./uploads`;
         const tempFilePath = `./uploads/${file.originalname}`;
         if (!fs.existsSync(upload)) {
@@ -147,12 +148,12 @@ const postDataset = async (req, res, next) => {
         if (!extractionSuccess) return folder.returnResponse(res, 400, 'Error in File Processing');
 
         let unZipFileName = await folder.getFileName(distPath);
-        let fileName = `${unZipFileName}-${folder.generateUniqueName()}`;
+        let fileName = `${unZipFileName}-${uniqueCode}`;
         
         const validFolder = await folder.checkSubfolders(`${distPath}/${unZipFileName}`, userId);
         if (!validFolder) return folder.returnResponse(res, 400, `Uploaded file didn't have required folders`);
 
-        const uploadFileId = await folder.uploadFile(file, tempFilePath);
+        const uploadFileId = await folder.uploadFile(file, tempFilePath, fileName);
         const datasetResp = await datasetService.addDatasets(userId, fileName, uploadFileId);
         if (!datasetResp.acknowledged) return folder.returnResponse(res, 400, 'Error in adding new dataset');
 

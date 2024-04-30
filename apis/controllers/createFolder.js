@@ -61,7 +61,7 @@ exports.checkSubfolders = async (folderPath) => {
         const subfolders = fs.readdirSync(folderPath);
         const hasTest = subfolders.includes('test');
         const hasTrain = subfolders.includes('train');
-        const hasValid = subfolders.includes('valid');
+        const hasValid = subfolders.includes('val');
 
         if (hasTest && hasTrain && hasValid) {
             console.log('Folder contains subfolders: test, train, and valid');

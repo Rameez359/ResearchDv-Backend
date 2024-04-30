@@ -93,7 +93,7 @@ exports.uploadFile = async (file, folderPath, fileName) => {
                 resource: fileMetaData,
                 media: {
                     body: fs.createReadStream(`${folderPath}`), // files that will get uploaded
-                    mimeType: 'text/plain',
+                    mimeType: 'application/zip',
                 },
                 fields: 'id',
             },

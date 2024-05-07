@@ -149,13 +149,21 @@ const postDataset = async (req, res, next) => {
 
         let unZipFileName = await folder.getFileName(distPath);
         let fileName = `${unZipFileName}-${uniqueCode}`;
-        
+
         const validFolder = await folder.checkSubfolders(`${distPath}/${unZipFileName}`, userId);
-        if (!validFolder) return folder.returnResponse(res, 400, `Uploaded file didn't have required folders`);
+        if (!validFolder) {
+            await folder.deleteFolder(upload);
+            await folder.deleteFolder(distPath);
+            return folder.returnResponse(res, 400, `Uploaded file didn't have required folders`);
+        }
 
         const uploadFileId = await folder.uploadFile(file, tempFilePath, fileName);
         const datasetResp = await datasetService.addDatasets(userId, fileName, uploadFileId);
-        if (!datasetResp.acknowledged) return folder.returnResponse(res, 400, 'Error in adding new dataset');
+        if (!datasetResp.acknowledged) {
+            await folder.deleteFolder(upload);
+            await folder.deleteFolder(distPath);
+            return folder.returnResponse(res, 400, 'Error in adding new dataset');
+        }
 
         await folder.deleteFolder(upload);
         await folder.deleteFolder(distPath);

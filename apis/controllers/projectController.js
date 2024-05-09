@@ -215,6 +215,41 @@ const postTrainModel = async (req, res, next) => {
     }
 };
 
+const getResultFolder = async (req, res, next) => {
+    console.log(`Get User's Project payload request : ${JSON.stringify(req.params.id)}`);
+    const projectId = req.params.id;
+    if (!projectId) return returnResponse(res, 400, 'Please Send All Required Params');
+
+    const project = await projectService.getProjects({ projectId: projectId });
+    if (project.length === 0) return returnResponse(res, 400, 'Invalid Project Id');
+
+    const resultFolderId = project[0].resultFolderId;
+    if (!resultFolderId) return returnResponse(res, 500, 'Result Folder Id is Missing');
+
+    const resultFolder = await folder.listFiles(resultFolderId);
+    console.log(`Result Folders Ended with Response : ${JSON.stringify(resultFolder)}`);
+
+    return returnResponse(res, 200, 'Results Folders Fetched Successfully', resultFolder);
+};
+
+const getModelResults = async (req, res, next) => {
+    console.log(`Get User's Project payload request : ${JSON.stringify(req.params.id)}`);
+    const datasetResultId = req.params.id;
+    const resultFolder = await folder.listFiles(datasetResultId);
+    console.log(`Result Folders Ended with Response : ${JSON.stringify(resultFolder)}`);
+
+    return returnResponse(res, 200, 'Results Folders Fetched Successfully', resultFolder);
+};
+
+const getResultsFiles = async (req, res, next) => {
+    console.log(`Get User's Project payload request : ${JSON.stringify(req.params.id)}`);
+    const fileId = req.params.id;
+    const images = await folder.fetchDriveFile(fileId);
+    console.log(`Result images Ended with Response : ${JSON.stringify(images[0].data)}`);
+
+    return returnResponse(res, 200, 'Results Folders Fetched Successfully', images);
+};
+
 const returnResponse = (res, statusCode, msg, data = null) => {
     res.status(statusCode).json({
         statusCode: statusCode,
@@ -231,4 +266,7 @@ module.exports = {
     getUserDatasets,
     postDataset,
     postTrainModel,
+    getResultFolder,
+    getModelResults,
+    getResultsFiles,
 };

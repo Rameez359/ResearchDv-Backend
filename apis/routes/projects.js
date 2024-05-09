@@ -93,4 +93,10 @@ router.post('/postDataset', upload.single('file'), projectController.postDataset
 
 router.post('/postTrainModel', projectController.postTrainModel);
 
+router.get('/getResultFolder/:id', projectController.getResultFolder);
+
+router.get('/getModelResults/:id', projectController.getModelResults);
+
+router.get('/getResultsFiles/:id', projectController.getResultsFiles);
+
 module.exports = router;
